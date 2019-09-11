@@ -1,0 +1,128 @@
+<html>
+
+    <body>
+
+            <body style='margin: 0;'>
+                    <div id="player"></div>
+                    <p></p>
+                    <input type="button" id="crtButt" value="Create Room" onclick="createRoom();"><input id="roomId" type="text"><input id="joinButt" type="submit" value="Join Room" onclick="joinRoom();">
+                    <input type="button" value="Play" onclick="updatePlayer('play');">
+                    <input type="button" value="Pause" onclick="updatePlayer('pause');">
+                    <p></p>
+                    <input id="vId" type="text"><input type="submit" value="setvId" onclick="setvId(document.getElementById('vId').value);">
+        <script src="https://brokenbroadcaster.github.io/cryonPublicFiles/socket.io.js"></script>
+        <script>
+            var curRoom;
+
+            function updatePlayer(state){
+
+                if(state == "play"){
+                    player.playVideo();
+                    curRoom.time = player.getCurrentTime();
+                    curRoom.paused = false;
+                    console.log(curRoom)
+                    socket.emit("updateRoom", {roomId: curRoom.roomId, time: curRoom.time, site: curRoom.site, vId: curRoom.vId, paused: curRoom.paused})
+                }else if(state == "pause"){
+                    curRoom.time = player.getCurrentTime();
+                    curRoom.paused = true;
+                    console.log(curRoom)
+                    player.pauseVideo();
+                    socket.emit("updateRoom", {roomId: curRoom.roomId, time: curRoom.time, site: curRoom.site, vId: curRoom.vId, paused: curRoom.paused})
+                }
+
+            }
+
+            function createRoom(){
+                socket.emit('createRoom')
+            }
+
+            function setvId(vid){
+                if(vid.split("?v=")){
+                    vid = vid.split("?v=")[1];
+                }
+                player.loadVideoById(vid)
+                socket.emit("updateRoom", {roomId: curRoom.roomId, time: curRoom.time, site: curRoom.site, vId: vid, paused: curRoom.paused});
+
+            }
+
+            function updateRoom(data){
+                if(curRoom){
+                    var tempVId = curRoom.vId;
+                    if(data.vId != tempVId){
+                        player.loadVideoById(data.vId)
+                    }
+                }else{
+                    document.getElementById('roomId').value = data.roomId;
+                    document.getElementById('crtButt').setAttribute("disabled", true)
+                    document.getElementById('joinButt').setAttribute("disabled", true)
+                }
+                curRoom = data;
+                if(data.paused==true){
+                    player.pauseVideo();
+                }else{
+                    player.seekTo(curRoom.time);
+                    player.playVideo();
+                }
+                
+            }
+
+            function joinRoom() {
+                socket.emit("joinRoom", {roomId: document.getElementById("roomId").value})
+            }
+
+            var socket = io();
+            socket.on("updateRoom", (data) => {
+                updateRoom(data);
+            });
+
+
+            // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// 3. This function creates an <iframe> (and YouTube player)
+//    after the API code downloads.
+var player;
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('player', {
+    height: '390',
+    width: '640',
+    videoId: 'M7lc1UVf-VE',
+    playerVars: { 
+        'autoplay': 0,
+        'controls': 0, 
+        'rel' : 0,
+        'fs' : 0,
+    },
+    events: {
+      'onReady': onPlayerReady
+      //'onStateChange': onPlayerStateChange
+    }
+  });
+}
+
+// 4. The API will call this function when the video player is ready.
+function onPlayerReady(event) {
+  event.target.playVideo();
+}
+
+// 5. The API calls this function when the player's state changes.
+//    The function indicates that when playing a video (state=1),
+//    the player should play for six seconds and then stop.
+function onPlayerStateChange(event) {
+    if(curRoom.paused==true){
+                    player.pauseVideo();
+                }else{
+                    player.playVideo();
+                }
+}
+function stopVideo() {
+  player.stopVideo();
+}
+
+        </script>
+    </body>
+</html>
