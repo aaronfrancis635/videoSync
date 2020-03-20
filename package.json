@@ -16,7 +16,7 @@
     "configstore": "^5.0.0",
     "figlet": "^1.2.4",
     "inquirer": "^7.0.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.2",
     "mongodb": "^3.3.2",
     "socket.io": "^2.2.0"
   }
